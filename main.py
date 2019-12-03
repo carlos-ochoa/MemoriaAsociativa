@@ -186,8 +186,22 @@ class Main:
         matriz = np.array(m)
         return matriz
 
-    def crearMatrizPrincipal(self,matrices):
-        
+    def crearMatrizPrincipal(self,matrices,largo):
+        matriz = []
+        fila = []
+        casilla = []
+        # Iteramos sobre la cantidad de filas, que es 5
+        for i in range(5):
+            for j in range(largo):
+                for matriz in matrices:
+                    casilla.append(matriz[i][j])
+                max = max(casilla)
+                fila.append(max)
+                casilla.clear()
+            matriz.append(fila.copy())
+            fila.clear()
+        m = np.array(matriz)
+        return m
 
     def entrenar(self):
         i = 0
@@ -195,7 +209,7 @@ class Main:
         for vector in self.vectoresImagen:
             v = self.normalizarVector(vector)
             # Creamos la matriz enviando el patrón y la clase asociados
-            matriz = self.crearMatriz(v,self.clases[i])
+            matriz = self.crearMatrizClase(v,self.clases[i])
             i += 1
 
     def main(self):
