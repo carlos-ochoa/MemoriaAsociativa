@@ -163,6 +163,41 @@ class Main:
         print(v)
         return v
 
+    def normalizarMatriz(self,matriz):
+        m = matriz.copy()
+        m[m == 9] = 0
+        m[m == 214] = 1
+        print(m)
+        return m
+
+    def crearMatrizClase(self,patron,clase):
+        m = []
+        fila = []
+        valorMatriz
+        # El 5 es el largo del vector de la clase
+        for valor in clase:
+            j = 0
+            while j < len(patron):
+                valorMatriz = valor - patron[j]
+                fila.append(valorMatriz)
+                j += 1
+            m.append(fila.copy())
+            fila.clear()
+        matriz = np.array(m)
+        return matriz
+
+    def crearMatrizPrincipal(self,matrices):
+        
+
+    def entrenar(self):
+        i = 0
+        # Tomaremos cada una de las asociaciones para generar las 5 matrices de cada clase
+        for vector in self.vectoresImagen:
+            v = self.normalizarVector(vector)
+            # Creamos la matriz enviando el patrón y la clase asociados
+            matriz = self.crearMatriz(v,self.clases[i])
+            i += 1
+
     def main(self):
         self.window.title("Memoria morfológica heteroasociativa")
         self.window.geometry('750x450')
