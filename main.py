@@ -15,11 +15,14 @@ class Main:
     imagenActualDesplegada = ""
     tipoRuido = ""
     archivos = ()
+    # 5
     negro = 9
-    blanco = 214
+    # 246
+    blanco = 200
     vectoresImagen = []
     matricesImagen = []
     vectorPrueba = None
+    M = None
     clases = [np.array([1,0,0,0,0]),np.array([0,1,0,0,0]),np.array([0,0,1,0,0]),np.array([0,0,0,1,0]),np.array([0,0,0,0,1])]
     window = None
     btn_cargar = None
@@ -36,8 +39,8 @@ class Main:
         self.window = tk.Tk()
         self.btn_cargar = tk.Button(self.window,text="Cargar datos",bg="white",command=self.cargarImagenes)
         #btn_cargar_rec = tk.Button(window,text="Selecciona",bg="white",command=cargarImagen)
-        self.btn_entrenar = tk.Button(self.window,text="Entrenar",bg="#3981BF",fg="white")
-        self.btn_recuperar = tk.Button(self.window,text="Recuperar",bg="white")
+        self.btn_entrenar = tk.Button(self.window,text="Entrenar",bg="#3981BF",fg="white",command=self.entrenar)
+        self.btn_recuperar = tk.Button(self.window,text="Recuperar",bg="white",command=self.recuperar)
         self.btn_ruido = tk.Button(self.window,text="Agregar",bg="gray",fg="white", command=self.desplegarRuido)
         style = ttk.Style()
         style.theme_use('default')
@@ -45,7 +48,7 @@ class Main:
         self.progreso = Progressbar(self.window,length="300",style="blue.Horizontal.TProgressbar")
         self.cant_ruido = Entry(self.window,width=10)
         self.combo = Combobox(self.window)
-        self.combo['values']= ("-",0, 1, 2, 3, 4)
+        self.combo['values']= (0, 1, 2, 3, 4)
         self.combo.current(0)
         self.combo.bind("<<ComboboxSelected>>", self.cambiarImagenActiva)
         self.comboRuido = Combobox(self.window)
@@ -64,6 +67,10 @@ class Main:
         # Para cada imagen tomada obtenemos su valor en el vector de numpy
         for imagen in self.archivos:
             img = imread(imagen)
+
+            print(str(np.shape(img)))
+            #img.shape = (1600,1)
+            #imag = np.resize(img,(1,))
             self.matricesImagen.append(img)
             # Esta parte del codigo convierte la imagen en vector en lugar de matriz
             # Convertimos nuestra lista en un arreglo numpy
@@ -74,8 +81,9 @@ class Main:
             vector.clear()
             i += avance
             self.progreso['value'] = i
+            #print(str(np.amax(v)))
         messagebox.showinfo("Listo","Imágenes cargadas a la memoria")
-        print(self.vectoresImagen)
+        #print(self.vectoresImagen)
 
     def cambiarImagenActiva(self,event):
         nombreImagen = self.combo.get() + ".bmp"
@@ -98,23 +106,23 @@ class Main:
         while i < pixelesAfectados:
             # Recorremos cada uno de los pixeles de forma aleatoria para afectarles con el ruido
             pixel = random.randint(0,len(self.vectoresImagen[indice])-1)
-            fila = int(pixel / 28)
-            columna = pixel % 28
+            fila = int(pixel / 40)
+            columna = pixel % 40
             valor = matrizRuido.item(pixel)
             print(str(i))
             if tipo == "Aditivo":
-                if valor == self.blanco:
+                if valor <= self.blanco:
                     matrizRuido[fila][columna] = self.negro
                     i += 1
             elif tipo == "Sustractivo":
-                if valor == self.negro:
+                if valor >= self.negro:
                     matrizRuido[fila][columna] = self.blanco
                     i += 1
             elif tipo == "Mixto":
-                if valor == self.blanco:
+                if valor <= self.blanco:
                     matrizRuido[fila][columna] = self.negro
                     i += 1
-                elif valor == self.negro:
+                elif valor >= self.negro:
                     matrizRuido[fila][columna] = self.blanco
                     i += 1
         return matrizRuido
@@ -125,7 +133,7 @@ class Main:
             # Obtenemos el nombre de la imagen a la que se le quiere aplicar ruido
             nombre = self.imagenActualDesplegada
             nombreSeparado = nombre.split(".")
-            nuevoNombre = nombreSeparado[0] + self.comboRuido.get() + "." + nombreSeparado[1]
+            nuevoNombre = nombreSeparado[0] + self.comboRuido.get() + self.cant_ruido.get() + "." + nombreSeparado[1]
             indice = int(self.combo.get())
             porcentaje = int(self.cant_ruido.get())
             tipo = self.comboRuido.get()
@@ -150,30 +158,32 @@ class Main:
 
     def convertirMatrizaVector(self,matriz):
         vector = []
+        print("fila "+str(matriz[0][0][0]))
         for fila in matriz:
             for elemento in fila:
-                vector.append(elemento)
+                vector.append(elemento[0])
+        #print("V: " + str(vector))
         v = np.array(vector)
         return v
 
     def normalizarVector(self,vector):
         v = vector.copy()
-        v[v == 9] = 0
-        v[v == 214] = 1
+        v[v < 9] = 0
+        v[v > 200] = 1
         print(v)
         return v
 
     def normalizarMatriz(self,matriz):
         m = matriz.copy()
-        m[m == 9] = 0
-        m[m == 214] = 1
+        m[m < 9] = 0
+        m[m > 200] = 1
         print(m)
         return m
 
     def crearMatrizClase(self,patron,clase):
         m = []
         fila = []
-        valorMatriz
+        valorMatriz = 0
         # El 5 es el largo del vector de la clase
         for valor in clase:
             j = 0
@@ -187,30 +197,68 @@ class Main:
         return matriz
 
     def crearMatrizPrincipal(self,matrices,largo):
-        matriz = []
+        matrizF = []
         fila = []
         casilla = []
+        maxim = 0
         # Iteramos sobre la cantidad de filas, que es 5
         for i in range(5):
             for j in range(largo):
                 for matriz in matrices:
                     casilla.append(matriz[i][j])
-                max = max(casilla)
-                fila.append(max)
+                print("Casilla " + str(casilla))
+                maxim = max(casilla)
+                fila.append(maxim)
                 casilla.clear()
-            matriz.append(fila.copy())
+            matrizF.append(fila.copy())
             fila.clear()
-        m = np.array(matriz)
+        m = np.array(matrizF)
+        print(m)
         return m
 
     def entrenar(self):
         i = 0
+        matrices = []
         # Tomaremos cada una de las asociaciones para generar las 5 matrices de cada clase
         for vector in self.vectoresImagen:
             v = self.normalizarVector(vector)
             # Creamos la matriz enviando el patrón y la clase asociados
             matriz = self.crearMatrizClase(v,self.clases[i])
+            matrices.append(matriz.copy())
             i += 1
+        # Ahora obtenemos la matriz principal a partir de las matrices individuales
+        m = self.crearMatrizPrincipal(matrices,len(self.vectoresImagen[0]))
+        self.M = m
+        messagebox.showinfo("Completado","El entrenamiento ha sido completado")
+
+    def recuperar(self):
+        i = 0
+        fila = []
+        clase = []
+        minim = 0
+        patron = self.vectorPrueba.copy()
+        p = self.normalizarVector(patron)
+        for i in range(5):
+            for j in range(len(p)):
+                fila.append(self.M[i][j] + p[j])
+            minim = min(fila)
+            clase.append(minim)
+            fila.clear()
+        c = np.array(clase)
+        print("CLASE")
+        print(c)
+        # Ahora comparamos las clases conocidas con el resultado de la operación
+        while i < len(self.clases):
+            resultado = np.array_equal(c,self.clases[i])
+            if resultado:
+                messagebox.showinfo("Resultado","Se encontró en la imagen un " + str(i))
+                break
+            else:
+                i += 1
+        if i == len(self.clases): messagebox.showerror("Error","No se pudo asociar a ninguna clase el patrón")
+
+
+
 
     def main(self):
         self.window.title("Memoria morfológica heteroasociativa")
